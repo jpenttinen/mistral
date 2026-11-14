@@ -10,6 +10,7 @@ from worker.workflows.morning_report import (
     MorningReportInput,
     MorningReportWorkflow,
     build_report_prompt,
+    extract_message_text,
     parse_feed,
     parse_weather_payload,
     weather_code_to_fi,
@@ -110,6 +111,18 @@ def test_build_report_prompt_contains_sections():
     assert "Kuopion sää" in prompt
     assert "USA:n uutiset" in prompt
     assert "AP: Juttu" in prompt
+
+
+def test_extract_message_text_handles_str_and_content_blocks():
+    assert extract_message_text("tekstiä") == "tekstiä"
+    blocks = [
+        {"type": "thinking", "thinking": [{"type": "text", "text": "ajattelen..."}]},
+        {"type": "text", "text": "Raportti alkaa."},
+        {"type": "text", "text": "Loppu."},
+    ]
+    assert extract_message_text(blocks) == "Raportti alkaa.\nLoppu."
+    assert extract_message_text(None) == ""
+    assert extract_message_text([]) == ""
 
 
 def test_workflow_is_discoverable():

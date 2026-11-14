@@ -220,6 +220,24 @@ async def fetch_recent_us_news(hours: int, max_items: int) -> list[dict]:
     return [{k: v for k, v in item.items() if k != "published_ts"} for item in collected[:max_items]]
 
 
+def extract_message_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    parts = []
+    for block in content or []:
+        if isinstance(block, str):
+            parts.append(block)
+        elif isinstance(block, dict):
+            text = block.get("text")
+            if block.get("type") == "text" or text is not None:
+                parts.append(text or "")
+        else:
+            text = getattr(block, "text", None)
+            if text:
+                parts.append(text)
+    return "\n".join(part for part in parts if part)
+
+
 @workflows.activity(
     start_to_close_timeout=timedelta(minutes=3),
     retry_policy_max_attempts=3,
@@ -234,7 +252,7 @@ async def compose_report(weather: dict, news: list[dict], hours: int, client=Dep
             {"role": "user", "content": build_report_prompt(weather, news, hours, now_local)},
         ],
     )
-    return response.choices[0].message.content
+    return extract_message_text(response.choices[0].message.content)
 
 
 class MorningReportInput(pydantic.BaseModel):
