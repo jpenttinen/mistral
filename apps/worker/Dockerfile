@@ -9,5 +9,6 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY src/ ./src/
 ENV PYTHONPATH=/app/src
+ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["python", "-m", "worker.entrypoints.worker"]
